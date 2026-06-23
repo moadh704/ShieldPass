@@ -365,7 +365,6 @@ body::before {
     border-left-color: var(--primary);
 }
 
-/* Generator Controls */
 .generator-controls {
     background: rgba(10, 10, 20, 0.5);
     border-radius: 8px;
@@ -376,21 +375,30 @@ body::before {
 
 .generator-header {
     font-weight: 600;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.6rem;
     color: var(--primary);
     font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.generator-desc {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin-bottom: 0.8rem;
 }
 
 .generator-options {
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
+    gap: 0.85rem;
 }
 
 .option-row {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.8rem;
     flex-wrap: wrap;
 }
 
@@ -399,7 +407,6 @@ body::before {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    cursor: pointer;
 }
 
 .option-row input[type="range"] {
@@ -408,7 +415,28 @@ body::before {
 }
 
 .option-row.checkboxes {
-    gap: 1.2rem;
+    gap: 1.1rem;
+}
+
+.custom-words-input textarea {
+    width: 100%;
+    background: rgba(10, 10, 20, 0.7);
+    border: 1px solid var(--gray);
+    border-radius: 6px;
+    color: var(--light);
+    padding: 0.6rem;
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 50px;
+}
+
+.custom-words-input textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.custom-passphrase {
+    border-left: 3px solid var(--secondary);
 }
 
 .action-buttons {
@@ -418,7 +446,6 @@ body::before {
     flex-wrap: wrap;
 }
 
-/* History */
 .history-card {
     margin-top: 0.5rem;
 }
@@ -532,7 +559,6 @@ body::before {
     }
 }
 
-/* Light mode */
 body.light-mode {
     --dark: #f0f0f5;
     --darker: #e0e0ea;
