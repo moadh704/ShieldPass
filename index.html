@@ -152,10 +152,10 @@
                 </div>
             </div>
             
-            <!-- Enhanced Generator Controls -->
+            <!-- Random Password Generator -->
             <div class="generator-controls">
                 <div class="generator-header">
-                    <span>Password Generator</span>
+                    <i class="fas fa-random"></i> <span>Random Password Generator</span>
                 </div>
                 
                 <div class="generator-options">
@@ -173,10 +173,49 @@
                     
                     <div class="option-row">
                         <button class="btn btn-primary" id="generatePassword">
-                            <i class="fas fa-bolt"></i> Generate Password
+                            <i class="fas fa-bolt"></i> Generate Random
                         </button>
-                        <button class="btn" id="generatePassphrase">
-                            <i class="fas fa-quote-left"></i> Generate Passphrase
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW: Custom Word Passphrase Generator -->
+            <div class="generator-controls custom-passphrase">
+                <div class="generator-header">
+                    <i class="fas fa-quote-left"></i> <span>Custom Word Passphrase Generator</span>
+                </div>
+                <p class="generator-desc">Enter your own words below to create a strong, memorable password.</p>
+                
+                <div class="custom-words-input">
+                    <textarea id="customWords" placeholder="Enter words separated by commas or spaces (e.g. dog, pizza, summer, coffee)" rows="2"></textarea>
+                </div>
+                
+                <div class="generator-options">
+                    <div class="option-row">
+                        <label>Words to use: <span id="wordsCountValue">4</span></label>
+                        <input type="range" id="customWordsCount" min="2" max="6" value="4" step="1">
+                    </div>
+                    
+                    <div class="option-row">
+                        <label for="customSeparator">Separator:</label>
+                        <select id="customSeparator">
+                            <option value="-">Dash (-)</option>
+                            <option value="_">Underscore (_)</option>
+                            <option value=".">Dot (.)</option>
+                            <option value=" ">Space</option>
+                            <option value="">None</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-row checkboxes">
+                        <label><input type="checkbox" id="customCapitalize" checked> Capitalize words</label>
+                        <label><input type="checkbox" id="customAddNumber" checked> Add number</label>
+                        <label><input type="checkbox" id="customAddSymbol" checked> Add symbol</label>
+                    </div>
+                    
+                    <div class="option-row">
+                        <button class="btn btn-primary" id="generateCustomPassphrase">
+                            <i class="fas fa-magic"></i> Generate from My Words
                         </button>
                     </div>
                 </div>
