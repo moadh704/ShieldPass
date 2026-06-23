@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleVisibility = document.getElementById('toggleVisibility');
     const copyPassword = document.getElementById('copyPassword');
     const generatePassword = document.getElementById('generatePassword');
+    const generatePassphrase = document.getElementById('generatePassphrase');
     const strengthFill = document.getElementById('strengthFill');
     const strengthText = document.getElementById('strengthText');
     const scoreText = document.getElementById('scoreText');
@@ -11,6 +12,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const apiStatus = document.getElementById('apiStatus');
     const gaugeFill = document.getElementById('gaugeFill');
     const gaugeValue = document.getElementById('gaugeValue');
+    const copyReport = document.getElementById('copyReport');
+    
+    // New elements
+    const genLength = document.getElementById('genLength');
+    const lengthValueGen = document.getElementById('lengthValueGen');
+    const genUpper = document.getElementById('genUpper');
+    const genLower = document.getElementById('genLower');
+    const genNumbers = document.getElementById('genNumbers');
+    const genSymbols = document.getElementById('genSymbols');
+    const clearHistoryBtn = document.getElementById('clearHistory');
+    const historyList = document.getElementById('historyList');
     
     // Checklist items
     const lengthCheck = document.getElementById('lengthCheck');
@@ -20,16 +32,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const symbolCheck = document.getElementById('symbolCheck');
     const sequenceCheck = document.getElementById('sequenceCheck');
     const repeatCheck = document.getElementById('repeatCheck');
+    const commonCheck = document.getElementById('commonCheck');
     
     // Stat values
     const lengthValue = document.getElementById('lengthValue');
     const entropyValue = document.getElementById('entropyValue');
     const charTypes = document.getElementById('charTypes');
     const pwnedCount = document.getElementById('pwnedCount');
+    const crackTimeValue = document.getElementById('crackTimeValue');
     
     // Recommendations container
     const recommendations = document.getElementById('recommendations');
     
+    // Common passwords list (top ~40 worst passwords)
+    const commonPasswords = new Set([
+        'password', '123456', '123456789', 'qwerty', 'abc123', 'password1', '12345678', '111111',
+        '123123', 'admin', 'letmein', 'welcome', 'monkey', 'dragon', 'master', 'sunshine',
+        'princess', 'football', 'shadow', 'superman', 'michael', 'batman', 'trustno1', 'iloveyou',
+        '000000', '1234', '12345', '1234567', '1234567890', 'qwerty123', 'password123', '1q2w3e4r',
+        'baseball', 'starwars', 'passw0rd', 'whatever', 'whatever1', 'hello123', 'freedom', 'whatever'
+    ]);
+
+    // Small word list for passphrase generation
+    const wordList = [
+        'apple', 'brave', 'cloud', 'delta', 'eagle', 'flame', 'ghost', 'happy', 'ivory', 'jelly',
+        'knight', 'lemon', 'magic', 'noble', 'ocean', 'pixel', 'quiet', 'river', 'spark', 'tiger',
+        'unity', 'vivid', 'whale', 'xenon', 'youth', 'zebra', 'amber', 'blaze', 'coral', 'drift',
+        'ember', 'frost', 'grove', 'haven', 'iris', 'jade', 'kale', 'lunar', 'moss', 'nova'
+    ];
+
     // Password visibility toggle
     let isPasswordVisible = false;
     toggleVisibility.addEventListener('click', function() {
@@ -43,24 +74,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // Copy password to clipboard
     copyPassword.addEventListener('click', function() {
         if (passwordInput.value) {
-            passwordInput.select();
-            document.execCommand('copy');
-            
-            // Visual feedback
-            const originalText = copyPassword.innerHTML;
-            copyPassword.innerHTML = '<i class="fas fa-check"></i>';
-            setTimeout(() => {
-                copyPassword.innerHTML = originalText;
-            }, 1500);
+            navigator.clipboard.writeText(passwordInput.value).then(() => {
+                const originalText = copyPassword.innerHTML;
+                copyPassword.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    copyPassword.innerHTML = originalText;
+                }, 1500);
+            });
         }
     });
-    
-    // Generate secure password
+
+    // Length slider for generator
+    genLength.addEventListener('input', function() {
+        lengthValueGen.textContent = this.value;
+    });
+
+    // Generate secure password (improved)
     generatePassword.addEventListener('click', function() {
-        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
-        let password = "";
-        const length = 16;
+        const length = parseInt(genLength.value);
+        let charset = '';
         
+        if (genUpper.checked) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        if (genLower.checked) charset += 'abcdefghijklmnopqrstuvwxyz';
+        if (genNumbers.checked) charset += '0123456789';
+        if (genSymbols.checked) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+        
+        if (charset === '') {
+            alert('Please select at least one character type!');
+            return;
+        }
+        
+        let password = '';
         for (let i = 0; i < length; i++) {
             password += charset.charAt(Math.floor(Math.random() * charset.length));
         }
@@ -71,6 +115,29 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleVisibility.innerHTML = '<i class="fas fa-eye-slash"></i>';
         
         analyzePassword(password);
+    });
+
+    // Generate memorable passphrase
+    generatePassphrase.addEventListener('click', function() {
+        const numWords = 4;
+        let passphrase = '';
+        
+        for (let i = 0; i < numWords; i++) {
+            const word = wordList[Math.floor(Math.random() * wordList.length)];
+            passphrase += word.charAt(0).toUpperCase() + word.slice(1);
+            if (i < numWords - 1) passphrase += '-';
+        }
+        
+        // Add a number and symbol for extra strength
+        passphrase += Math.floor(Math.random() * 90) + 10;
+        passphrase += ['!', '@', '#', '$'][Math.floor(Math.random() * 4)];
+        
+        passwordInput.value = passphrase;
+        passwordInput.type = 'text';
+        isPasswordVisible = true;
+        toggleVisibility.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        
+        analyzePassword(passphrase);
     });
     
     // Theme toggle
@@ -89,25 +156,82 @@ document.addEventListener('DOMContentLoaded', function() {
         analyzePassword(this.value);
     });
     
-    // Password analysis function
+    // Copy full analysis report
+    copyReport.addEventListener('click', function() {
+        const password = passwordInput.value;
+        if (!password) {
+            alert('Analyze a password first!');
+            return;
+        }
+        
+        const report = generateAnalysisReport(password);
+        navigator.clipboard.writeText(report).then(() => {
+            const originalText = copyReport.innerHTML;
+            copyReport.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                copyReport.innerHTML = originalText;
+            }, 2000);
+        });
+    });
+
+    // Clear history
+    clearHistoryBtn.addEventListener('click', function() {
+        if (confirm('Clear all password history?')) {
+            localStorage.removeItem('shieldpass_history');
+            renderHistory();
+        }
+    });
+
+    // Main analysis function
     function analyzePassword(password) {
+        if (!password) {
+            resetUI();
+            return;
+        }
+
         const checks = performChecks(password);
         const score = calculateScore(checks, password);
         const entropy = calculateEntropy(password);
-        updateUI(checks, score, entropy, password);
+        const crackTime = estimateCrackTime(entropy, password);
         
-        // Check password against HaveIBeenPwned API
+        updateUI(checks, score, entropy, password, crackTime);
+        
+        // Check against HaveIBeenPwned
         if (password.length >= 4) {
             checkPwnedPassword(password);
         } else {
             pwnedCount.textContent = '-';
-            apiStatus.innerHTML = '<i class="fas fa-circle"></i> <span>Enter at least 4 characters to check against breaches</span>';
+            apiStatus.innerHTML = '<i class="fas fa-circle"></i> <span>Enter at least 4 characters to check breaches</span>';
             apiStatus.className = 'api-status';
         }
+
+        // Save to history
+        saveToHistory(password, score, entropy);
     }
-    
+
+    function resetUI() {
+        strengthFill.style.width = '0%';
+        strengthText.textContent = 'None';
+        scoreText.textContent = '0%';
+        lengthValue.textContent = '0';
+        entropyValue.textContent = '0';
+        charTypes.textContent = '0';
+        pwnedCount.textContent = '-';
+        crackTimeValue.textContent = 'N/A';
+        gaugeFill.style.strokeDashoffset = 314;
+        gaugeValue.textContent = '0';
+        recommendations.innerHTML = `<div class="recommendation"><i class="fas fa-info-circle"></i> <span>Enter a password to get security recommendations</span></div>`;
+        
+        // Reset checks
+        [lengthCheck, uppercaseCheck, lowercaseCheck, numberCheck, symbolCheck, sequenceCheck, repeatCheck, commonCheck].forEach(el => {
+            el.className = 'check-item';
+            el.innerHTML = el.innerHTML.replace(/<i.*?</i>/, '<i class="fas fa-times-circle"></i>');
+        });
+    }
+
     // Perform all password checks
     function performChecks(password) {
+        const lower = password.toLowerCase();
         return {
             length: password.length >= 8,
             uppercase: /[A-Z]/.test(password),
@@ -115,81 +239,83 @@ document.addEventListener('DOMContentLoaded', function() {
             number: /[0-9]/.test(password),
             symbol: /[^A-Za-z0-9]/.test(password),
             sequence: !hasKeyboardSequence(password),
-            repeat: !hasRepeatedChars(password)
+            repeat: !hasRepeatedChars(password),
+            common: !commonPasswords.has(lower)
         };
     }
-    
-    // Check for keyboard sequences
+
     function hasKeyboardSequence(password) {
-        const sequences = [
-            '123456', 'abcdef', 'qwerty', 'asdfgh', 'zxcvbn',
-            'password', '12345678', '123456789', '1234567890'
-        ];
-        
-        const lowerPassword = password.toLowerCase();
-        return sequences.some(seq => lowerPassword.includes(seq));
+        const sequences = ['123456', 'abcdef', 'qwerty', 'asdfgh', 'zxcvbn', 'password', '12345678', '123456789', '1234567890'];
+        const lower = password.toLowerCase();
+        return sequences.some(seq => lower.includes(seq));
     }
-    
-    // Check for repeated characters
+
     function hasRepeatedChars(password) {
         return /(.)\1{2,}/.test(password);
     }
-    
+
     // Calculate password score (0-100)
     function calculateScore(checks, password) {
         let score = 0;
         
-        // Base points for checks
-        if (checks.length) score += 20;
-        if (checks.uppercase) score += 15;
-        if (checks.lowercase) score += 15;
-        if (checks.number) score += 15;
-        if (checks.symbol) score += 15;
-        if (checks.sequence) score += 10;
-        if (checks.repeat) score += 10;
+        if (checks.length) score += 18;
+        if (checks.uppercase) score += 14;
+        if (checks.lowercase) score += 14;
+        if (checks.number) score += 14;
+        if (checks.symbol) score += 14;
+        if (checks.sequence) score += 8;
+        if (checks.repeat) score += 8;
+        if (checks.common) score += 10;
         
-        // Bonus points for length
-        if (password.length >= 12) score += 10;
+        // Length bonuses
+        if (password.length >= 12) score += 8;
         if (password.length >= 16) score += 10;
+        if (password.length >= 20) score += 5;
         
-        return Math.min(score, 100);
+        return Math.min(Math.max(score, 0), 100);
     }
-    
-    // Calculate password entropy
+
+    // Calculate entropy
     function calculateEntropy(password) {
-        if (password.length === 0) return 0;
-        
-        // Character set size estimation
+        if (!password) return 0;
         let charsetSize = 0;
         if (/[a-z]/.test(password)) charsetSize += 26;
         if (/[A-Z]/.test(password)) charsetSize += 26;
         if (/[0-9]/.test(password)) charsetSize += 10;
-        if (/[^A-Za-z0-9]/.test(password)) charsetSize += 32; // Common symbols
+        if (/[^A-Za-z0-9]/.test(password)) charsetSize += 32;
         
-        // Entropy formula: log2(charsetSize^length)
-        return Math.round(Math.log2(Math.pow(charsetSize, password.length)));
+        return Math.round(Math.log2(Math.pow(charsetSize || 1, password.length)));
     }
-    
-    // Update UI based on analysis
-    function updateUI(checks, score, entropy, password) {
-        // Update strength meter
+
+    // Estimate realistic crack time
+    function estimateCrackTime(entropy, password) {
+        if (!password || entropy === 0) return { text: 'N/A', color: 'var(--gray)' };
+        
+        // Assumptions: 10 billion guesses per second (modern GPU cluster)
+        const guessesPerSecond = 10_000_000_000;
+        const guesses = Math.pow(2, entropy);
+        const seconds = guesses / guessesPerSecond;
+        
+        if (seconds < 1) return { text: 'Instant', color: 'var(--danger)' };
+        if (seconds < 60) return { text: `${Math.ceil(seconds)} seconds`, color: 'var(--danger)' };
+        if (seconds < 3600) return { text: `${Math.ceil(seconds / 60)} minutes`, color: 'var(--danger)' };
+        if (seconds < 86400) return { text: `${Math.ceil(seconds / 3600)} hours`, color: 'var(--warning)' };
+        if (seconds < 31536000) return { text: `${Math.ceil(seconds / 86400)} days`, color: 'var(--warning)' };
+        if (seconds < 315360000) return { text: `${Math.ceil(seconds / 31536000)} years`, color: '#4cd964' };
+        
+        return { text: 'Centuries+', color: 'var(--primary)' };
+    }
+
+    // Update UI
+    function updateUI(checks, score, entropy, password, crackTime) {
+        // Strength meter
         strengthFill.style.width = `${score}%`;
         
-        // Update strength text and color
         let strengthLevel, strengthColor;
-        if (score < 40) {
-            strengthLevel = "Weak";
-            strengthColor = "var(--danger)";
-        } else if (score < 70) {
-            strengthLevel = "Fair";
-            strengthColor = "var(--warning)";
-        } else if (score < 90) {
-            strengthLevel = "Good";
-            strengthColor = "#4cd964";
-        } else {
-            strengthLevel = "Strong";
-            strengthColor = "var(--primary)";
-        }
+        if (score < 40) { strengthLevel = 'Weak'; strengthColor = 'var(--danger)'; }
+        else if (score < 65) { strengthLevel = 'Fair'; strengthColor = 'var(--warning)'; }
+        else if (score < 85) { strengthLevel = 'Good'; strengthColor = '#4cd964'; }
+        else { strengthLevel = 'Strong'; strengthColor = 'var(--primary)'; }
         
         strengthFill.style.background = strengthColor;
         strengthText.textContent = strengthLevel;
@@ -204,12 +330,12 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCheckItem(symbolCheck, checks.symbol);
         updateCheckItem(sequenceCheck, checks.sequence);
         updateCheckItem(repeatCheck, checks.repeat);
+        updateCheckItem(commonCheck, checks.common);
         
-        // Update stats
+        // Stats
         lengthValue.textContent = password.length;
         entropyValue.textContent = entropy;
         
-        // Count character types
         let typeCount = 0;
         if (checks.lowercase) typeCount++;
         if (checks.uppercase) typeCount++;
@@ -217,163 +343,77 @@ document.addEventListener('DOMContentLoaded', function() {
         if (checks.symbol) typeCount++;
         charTypes.textContent = typeCount;
         
-        // Update entropy gauge
-        const gaugeOffset = 314 - (entropy / 100 * 314);
-        gaugeFill.style.strokeDashoffset = Math.min(gaugeOffset, 314);
+        // Entropy gauge
+        const gaugeOffset = 314 - Math.min((entropy / 120) * 314, 314);
+        gaugeFill.style.strokeDashoffset = gaugeOffset;
         gaugeValue.textContent = entropy;
         
-        // Update recommendations
+        // Crack time
+        crackTimeValue.textContent = crackTime.text;
+        crackTimeValue.style.color = crackTime.color;
+        
+        // Recommendations
         updateRecommendations(checks, score, entropy, password);
     }
-    
-    // Update individual checklist item
+
     function updateCheckItem(element, isValid) {
-        if (isValid) {
-            element.className = "check-item valid";
-            element.innerHTML = '<i class="fas fa-check-circle"></i> ' + element.textContent;
-        } else {
-            element.className = "check-item invalid";
-            element.innerHTML = '<i class="fas fa-times-circle"></i> ' + element.textContent;
-        }
+        const icon = isValid ? 'fa-check-circle' : 'fa-times-circle';
+        const className = isValid ? 'check-item valid' : 'check-item invalid';
+        element.className = className;
+        element.innerHTML = `<i class="fas ${icon}"></i> ${element.textContent.split('> ').pop() || element.textContent}`;
     }
-    
+
     // Update recommendations
     function updateRecommendations(checks, score, entropy, password) {
         recommendations.innerHTML = '';
         
-        if (password.length === 0) {
-            recommendations.innerHTML = `
-                <div class="recommendation">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Enter a password to get security recommendations</span>
-                </div>
-            `;
-            return;
+        if (score >= 85) {
+            recommendations.innerHTML += `<div class="recommendation positive"><i class="fas fa-check-circle"></i> <span>Excellent! This is a strong, secure password.</span></div>`;
         }
         
-        // Positive feedback for strong passwords
-        if (score >= 80) {
-            recommendations.innerHTML += `
-                <div class="recommendation positive">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Great! Your password has strong security characteristics.</span>
-                </div>
-            `;
+        if (!checks.length) {
+            recommendations.innerHTML += `<div class="recommendation"><i class="fas fa-exclamation-triangle"></i> <span>Use at least 12-16 characters for better security.</span></div>`;
         }
-        
-        // Length recommendations
-        if (password.length < 8) {
-            recommendations.innerHTML += `
-                <div class="recommendation">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Your password is too short. Use at least 8 characters.</span>
-                </div>
-            `;
-        } else if (password.length < 12) {
-            recommendations.innerHTML += `
-                <div class="recommendation">
-                    <i class="fas fa-lightbulb"></i>
-                    <span>Consider using 12 or more characters for better security.</span>
-                </div>
-            `;
+        if (!checks.uppercase || !checks.lowercase) {
+            recommendations.innerHTML += `<div class="recommendation"><i class="fas fa-lightbulb"></i> <span>Mix uppercase and lowercase letters.</span></div>`;
         }
-        
-        // Character diversity recommendations
-        if (!checks.uppercase) {
-            recommendations.innerHTML += `
-                <div class="recommendation">
-                    <i class="fas fa-lightbulb"></i>
-                    <span>Add uppercase letters to increase password strength.</span>
-                </div>
-            `;
-        }
-        
-        if (!checks.lowercase) {
-            recommendations.innerHTML += `
-                <div class="recommendation">
-                    <i class="fas fa-lightbulb"></i>
-                    <span>Add lowercase letters to increase password strength.</span>
-                </div>
-            `;
-        }
-        
         if (!checks.number) {
-            recommendations.innerHTML += `
-                <div class="recommendation">
-                    <i class="fas fa-lightbulb"></i>
-                    <span>Include numbers to make your password harder to guess.</span>
-                </div>
-            `;
+            recommendations.innerHTML += `<div class="recommendation"><i class="fas fa-lightbulb"></i> <span>Add numbers to increase complexity.</span></div>`;
         }
-        
         if (!checks.symbol) {
-            recommendations.innerHTML += `
-                <div class="recommendation">
-                    <i class="fas fa-lightbulb"></i>
-                    <span>Add symbols (like !, @, #) to improve security.</span>
-                </div>
-            `;
+            recommendations.innerHTML += `<div class="recommendation"><i class="fas fa-lightbulb"></i> <span>Include symbols (!@#$ etc.) for stronger security.</span></div>`;
         }
-        
-        // Pattern recommendations
         if (!checks.sequence) {
-            recommendations.innerHTML += `
-                <div class="recommendation">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Avoid common keyboard sequences like "qwerty" or "123456".</span>
-                </div>
-            `;
+            recommendations.innerHTML += `<div class="recommendation"><i class="fas fa-exclamation-triangle"></i> <span>Avoid common sequences like "qwerty" or "123456".</span></div>`;
         }
-        
         if (!checks.repeat) {
-            recommendations.innerHTML += `
-                <div class="recommendation">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Avoid repeated characters (like "aaa" or "111").</span>
-                </div>
-            `;
+            recommendations.innerHTML += `<div class="recommendation"><i class="fas fa-exclamation-triangle"></i> <span>Avoid repeated characters (aaa, 111).</span></div>`;
         }
-        
-        // Entropy recommendations
-        if (entropy < 40) {
-            recommendations.innerHTML += `
-                <div class="recommendation">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Your password has low entropy. Consider making it more random.</span>
-                </div>
-            `;
-        } else if (entropy < 60) {
-            recommendations.innerHTML += `
-                <div class="recommendation">
-                    <i class="fas fa-lightbulb"></i>
-                    <span>Your password has moderate entropy. More randomness would help.</span>
-                </div>
-            `;
+        if (!checks.common) {
+            recommendations.innerHTML += `<div class="recommendation"><i class="fas fa-exclamation-triangle"></i> <span>This is a very common password. Change it immediately!</span></div>`;
+        }
+        if (entropy < 50) {
+            recommendations.innerHTML += `<div class="recommendation"><i class="fas fa-lightbulb"></i> <span>Increase randomness — consider using a passphrase.</span></div>`;
         }
     }
-    
-    // Check password against HaveIBeenPwned API
+
+    // Check HaveIBeenPwned
     async function checkPwnedPassword(password) {
         try {
             apiStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span>Checking against known breaches...</span>';
             apiStatus.className = 'api-status';
             
-            // Create SHA-1 hash of the password
             const encoder = new TextEncoder();
             const data = encoder.encode(password);
             const hashBuffer = await crypto.subtle.digest('SHA-1', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
             
-            // Use k-anonymity model (send only first 5 chars of hash)
             const prefix = hashHex.substring(0, 5);
             const suffix = hashHex.substring(5);
             
             const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
-            
-            if (!response.ok) {
-                throw new Error('API request failed');
-            }
+            if (!response.ok) throw new Error('API failed');
             
             const dataText = await response.text();
             const hashes = dataText.split('\n');
@@ -387,34 +427,126 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            pwnedCount.textContent = count;
+            pwnedCount.textContent = count > 0 ? count.toLocaleString() : '0';
             
             if (count > 0) {
-                apiStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>This password has been seen in ${count.toLocaleString()} data breaches!</span>`;
+                apiStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>Seen in ${count.toLocaleString()} breaches! Do not use.</span>`;
                 apiStatus.className = 'api-status error';
-                
-                // Add pwned warning to recommendations
-                recommendations.innerHTML += `
-                    <div class="recommendation">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>This password has been exposed in data breaches. Do not use it!</span>
-                    </div>
-                `;
+                recommendations.innerHTML += `<div class="recommendation"><i class="fas fa-exclamation-triangle"></i> <span>This password has been exposed in data breaches. Change it now!</span></div>`;
             } else {
-                apiStatus.innerHTML = '<i class="fas fa-check-circle"></i> <span>Password not found in known breaches</span>';
+                apiStatus.innerHTML = '<i class="fas fa-check-circle"></i> <span>Not found in known breaches</span>';
                 apiStatus.className = 'api-status connected';
             }
         } catch (error) {
-            console.error('Error checking pwned passwords:', error);
-            apiStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Unable to check breaches (API error)</span>';
+            console.error(error);
+            apiStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Unable to check breaches</span>';
             apiStatus.className = 'api-status error';
             pwnedCount.textContent = '?';
         }
     }
-    
-    // Initialize with example password
-    setTimeout(() => {
-        passwordInput.value = 'ExamplePass123!';
-        analyzePassword('ExamplePass123!');
-    }, 500);
+
+    // Generate analysis report for copying
+    function generateAnalysisReport(password) {
+        const checks = performChecks(password);
+        const score = calculateScore(checks, password);
+        const entropy = calculateEntropy(password);
+        const crackTime = estimateCrackTime(entropy, password);
+        
+        let report = `ShieldPass Analysis Report\n`;
+        report += `========================\n\n`;
+        report += `Password: ${password.replace(/./g, '*')}\n`;
+        report += `Score: ${score}% (${strengthText.textContent})\n`;
+        report += `Entropy: ${entropy} bits\n`;
+        report += `Estimated Crack Time: ${crackTime.text}\n`;
+        report += `Length: ${password.length} characters\n\n`;
+        report += `Checks Passed:\n`;
+        if (checks.length) report += `  ✓ Length >= 8\n`;
+        if (checks.uppercase) report += `  ✓ Contains uppercase\n`;
+        if (checks.lowercase) report += `  ✓ Contains lowercase\n`;
+        if (checks.number) report += `  ✓ Contains numbers\n`;
+        if (checks.symbol) report += `  ✓ Contains symbols\n`;
+        if (checks.sequence) report += `  ✓ No keyboard sequences\n`;
+        if (checks.repeat) report += `  ✓ No repeated characters\n`;
+        if (checks.common) report += `  ✓ Not a common password\n`;
+        
+        report += `\nGenerated on ${new Date().toLocaleString()}\n`;
+        report += `ShieldPass v2.0 - https://github.com/moadh704/ShieldPass`;
+        
+        return report;
+    }
+
+    // History functions
+    function saveToHistory(password, score, entropy) {
+        let history = JSON.parse(localStorage.getItem('shieldpass_history') || '[]');
+        
+        // Avoid duplicates
+        history = history.filter(item => item.password !== password);
+        
+        history.unshift({
+            password: password,
+            score: score,
+            entropy: entropy,
+            timestamp: new Date().toISOString()
+        });
+        
+        if (history.length > 8) history = history.slice(0, 8);
+        
+        localStorage.setItem('shieldpass_history', JSON.stringify(history));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('shieldpass_history') || '[]');
+        historyList.innerHTML = '';
+        
+        if (history.length === 0) {
+            historyList.innerHTML = `<div class="history-empty">No passwords analyzed yet. Your history will appear here.</div>`;
+            return;
+        }
+        
+        history.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            const date = new Date(item.timestamp).toLocaleDateString();
+            
+            div.innerHTML = `
+                <div class="history-info">
+                    <span class="history-password">${item.password.replace(/./g, '•')}</span>
+                    <span class="history-meta">${item.score}% • ${item.entropy} bits • ${date}</span>
+                </div>
+                <div class="history-actions">
+                    <button class="btn btn-small load-btn" data-index="${index}"><i class="fas fa-redo"></i></button>
+                </div>
+            `;
+            
+            div.querySelector('.load-btn').addEventListener('click', () => {
+                passwordInput.value = item.password;
+                passwordInput.type = 'text';
+                isPasswordVisible = true;
+                toggleVisibility.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                analyzePassword(item.password);
+            });
+            
+            historyList.appendChild(div);
+        });
+    }
+
+    // Initialize
+    function initialize() {
+        // Update generator length display
+        lengthValueGen.textContent = genLength.value;
+        
+        // Load history
+        renderHistory();
+        
+        // Demo password
+        setTimeout(() => {
+            if (!passwordInput.value) {
+                passwordInput.value = 'ExamplePass123!';
+                analyzePassword('ExamplePass123!');
+            }
+        }, 600);
+    }
+
+    initialize();
 });
