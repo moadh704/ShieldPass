@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleVisibility = document.getElementById('toggleVisibility');
     const copyPassword = document.getElementById('copyPassword');
     const generatePassword = document.getElementById('generatePassword');
-    const generatePassphrase = document.getElementById('generatePassphrase');
     const strengthFill = document.getElementById('strengthFill');
     const strengthText = document.getElementById('strengthText');
     const scoreText = document.getElementById('scoreText');
@@ -22,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const genNumbers = document.getElementById('genNumbers');
     const genSymbols = document.getElementById('genSymbols');
     
-    // NEW: Custom Word Passphrase elements
+    // Custom Word Passphrase elements
     const customWordsInput = document.getElementById('customWords');
     const customWordsCount = document.getElementById('customWordsCount');
     const wordsCountValue = document.getElementById('wordsCountValue');
@@ -63,14 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
         'baseball', 'starwars', 'passw0rd', 'whatever', 'whatever1', 'hello123', 'freedom'
     ]);
 
-    // Default word list for random passphrase (kept for backward compatibility)
-    const wordList = [
-        'apple', 'brave', 'cloud', 'delta', 'eagle', 'flame', 'ghost', 'happy', 'ivory', 'jelly',
-        'knight', 'lemon', 'magic', 'noble', 'ocean', 'pixel', 'quiet', 'river', 'spark', 'tiger',
-        'unity', 'vivid', 'whale', 'xenon', 'youth', 'zebra', 'amber', 'blaze', 'coral', 'drift',
-        'ember', 'frost', 'grove', 'haven', 'iris', 'jade', 'kale', 'lunar', 'moss', 'nova'
-    ];
-
     let isPasswordVisible = false;
 
     // Visibility toggle
@@ -97,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
     genLength.addEventListener('input', () => lengthValueGen.textContent = genLength.value);
     customWordsCount.addEventListener('input', () => wordsCountValue.textContent = customWordsCount.value);
 
-    // Random password generator (existing)
+    // Random password generator
     generatePassword.addEventListener('click', function() {
         const length = parseInt(genLength.value);
         let charset = '';
@@ -115,20 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setPasswordAndAnalyze(password);
     });
 
-    // Random passphrase from built-in list (existing)
-    generatePassphrase.addEventListener('click', function() {
-        const numWords = 4;
-        let passphrase = '';
-        for (let i = 0; i < numWords; i++) {
-            const word = wordList[Math.floor(Math.random() * wordList.length)];
-            passphrase += word.charAt(0).toUpperCase() + word.slice(1);
-            if (i < numWords - 1) passphrase += '-';
-        }
-        passphrase += (Math.floor(Math.random() * 90) + 10) + ['!', '@', '#', '$'][Math.floor(Math.random() * 4)];
-        setPasswordAndAnalyze(passphrase);
-    });
-
-    // === NEW: Custom Word Passphrase Generator ===
+    // === Custom Word Passphrase Generator ===
     generateCustomPassphrase.addEventListener('click', function() {
         const rawInput = customWordsInput.value.trim();
         if (!rawInput) {
@@ -247,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const checks = [lengthCheck, uppercaseCheck, lowercaseCheck, numberCheck, symbolCheck, sequenceCheck, repeatCheck, commonCheck];
         checks.forEach(el => {
             el.className = 'check-item';
-            el.innerHTML = el.innerHTML.replace(/<i.*?</i>/, '<i class="fas fa-times-circle"></i>');
+            el.innerHTML = el.innerHTML.replace(/<i.*?<\/i>/, '<i class="fas fa-times-circle"></i>');
         });
     }
 
